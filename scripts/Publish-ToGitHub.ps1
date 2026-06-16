@@ -127,8 +127,8 @@ try {
         }
     }
     elseif ($RepositoryUrl) {
-        $existingOrigin = (& git -C $ProjectRoot remote get-url origin 2>$null)
-        if ($LASTEXITCODE -eq 0 -and $existingOrigin) {
+        $remotes = @(& git -C $ProjectRoot remote)
+        if ($remotes -contains 'origin') {
             Invoke-Git remote set-url origin $RepositoryUrl
         }
         else {
