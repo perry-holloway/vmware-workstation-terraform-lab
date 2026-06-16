@@ -1,0 +1,22 @@
+apiVersion: 1
+
+datasources:
+  - name: Central Prometheus
+    uid: central-prometheus
+    type: prometheus
+    access: proxy
+    url: http://127.0.0.1:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: ${scrape_interval}
+
+  - name: Kubernetes Prometheus
+    uid: kubernetes-prometheus
+    type: prometheus
+    access: proxy
+    url: http://${kubernetes_address}:${kubernetes_prometheus_node_port}
+    isDefault: false
+    editable: false
+    jsonData:
+      timeInterval: ${scrape_interval}

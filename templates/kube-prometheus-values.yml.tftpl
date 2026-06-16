@@ -1,0 +1,35 @@
+grafana:
+  enabled: false
+
+alertmanager:
+  enabled: false
+
+prometheus:
+  service:
+    type: NodePort
+    nodePort: ${kubernetes_prometheus_node_port}
+  prometheusSpec:
+    retention: 10d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+
+prometheus-node-exporter:
+  hostNetwork: true
+  hostPID: true
+
+kube-state-metrics:
+  enabled: true

@@ -1,0 +1,50 @@
+global:
+  scrape_interval: ${scrape_interval}
+  evaluation_interval: ${scrape_interval}
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: central-prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["${prometheus_address}:9100"]
+        labels:
+          instance: ${prometheus_name}
+      - targets: ["${kubernetes_address}:9100"]
+        labels:
+          instance: ${kubernetes_name}
+      - targets: ["${grafana_address}:9100"]
+        labels:
+          instance: ${grafana_name}
+      - targets: ["${jenkins_address}:9100"]
+        labels:
+          instance: ${jenkins_name}
+
+  - job_name: standalone-prometheus
+    static_configs:
+      - targets: ["${prometheus_address}:9090"]
+        labels:
+          instance: ${prometheus_name}
+
+  - job_name: kubernetes-prometheus
+    static_configs:
+      - targets: ["${kubernetes_address}:${kubernetes_prometheus_node_port}"]
+        labels:
+          instance: ${kubernetes_name}
+
+  - job_name: kubernetes-federate
+    honor_labels: true
+    metrics_path: /federate
+    params:
+      match[]:
+        - '{__name__=~"kube_.*"}'
+        - '{__name__=~"container_.*"}'
+        - '{__name__=~"node_namespace_pod_container:.*"}'
+        - '{__name__=~"cluster:.*"}'
+    static_configs:
+      - targets: ["${kubernetes_address}:${kubernetes_prometheus_node_port}"]

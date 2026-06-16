@@ -1,0 +1,38 @@
+ssh_user             = "hollowayps"
+ssh_private_key_path = "C:/Users/hollowayps/.ssh/vmware_monitoring"
+workstation_vmrun_path = "C:/Program Files/VMware/VMware Workstation/vmrun.exe"
+
+prometheus_vmx_path = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Prometheus/Prometheus.vmx"
+kubernetes_vmx_path = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Kubernetes/Kubernetes.vmx"
+grafana_vmx_path    = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Grafana/Grafana.vmx"
+jenkins_vmx_path    = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Jenkins/Jenkins.vmx"
+
+manage_workstation_hardware = true
+start_workstation_vms       = true
+
+prometheus_vm = {
+  name    = "prometheus"
+  address = "192.168.126.129"
+}
+
+kubernetes_vm = {
+  name    = "kubernetes"
+  address = "192.168.126.131"
+}
+
+grafana_vm = {
+  name    = "grafana"
+  address = "192.168.126.133"
+}
+
+jenkins_vm = {
+  name    = "jenkins"
+  address = "192.168.126.134"
+}
+
+grafana_admin_password = "replace-with-a-strong-password"
+
+alert_cpu_threshold_percent       = 85
+alert_memory_threshold_percent    = 85
+alert_disk_threshold_percent      = 85
+alert_container_restart_threshold = 3
