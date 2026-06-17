@@ -1,6 +1,7 @@
 param(
     [string] $TemplateVmx = 'C:\VMs\Ubuntu-Template\Ubuntu-Template.vmx',
-    [string] $DestinationRoot = 'C:\Users\hollowayps\Documents\Codex\VMs\Monitoring-Lab',
+    [string] $DestinationRoot = 'C:\VMs\Monitoring-Lab',
+    [string] $TerraformPath = '',
     [switch] $RefreshKubernetesDisk,
     [switch] $RefreshJenkinsDisk,
     [switch] $SkipHardwareChanges
@@ -11,7 +12,13 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $logPath = Join-Path $projectRoot 'lab-build.log'
 $statusPath = Join-Path $projectRoot 'lab-build.status'
-$terraform = 'C:\Users\hollowayps\AppData\Local\Microsoft\WinGet\Packages\Hashicorp.Terraform_Microsoft.Winget.Source_8wekyb3d8bbwe\terraform.exe'
+
+if (-not $TerraformPath) {
+    $terraformCommand = Get-Command terraform -ErrorAction SilentlyContinue
+    if ($terraformCommand) {
+        $TerraformPath = $terraformCommand.Source
+    }
+}
 
 Set-Content -LiteralPath $statusPath -Value 'RUNNING' -Encoding ascii
 Start-Transcript -LiteralPath $logPath -Force | Out-Null
@@ -42,12 +49,12 @@ try {
 
     & (Join-Path $PSScriptRoot 'New-WorkstationLab.ps1') @labArgs
 
-    if (-not (Test-Path -LiteralPath $terraform)) {
-        throw "Terraform executable not found: $terraform"
+    if (-not $TerraformPath -or -not (Test-Path -LiteralPath $TerraformPath)) {
+        throw "Terraform executable not found. Install Terraform, add it to PATH, or pass -TerraformPath."
     }
 
     Set-Location -LiteralPath $projectRoot
-    & $terraform apply -auto-approve
+    & $TerraformPath apply -auto-approve
     if ($LASTEXITCODE -ne 0) {
         throw "terraform apply failed with exit code $LASTEXITCODE"
     }

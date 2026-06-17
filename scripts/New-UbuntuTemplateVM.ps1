@@ -1,5 +1,5 @@
 param(
-    [string] $IsoPath = 'C:\Users\hollowayps\Downloads\ubuntu-26.04-live-server-amd64.iso',
+    [Parameter(Mandatory)] [string] $IsoPath,
     [string] $DestinationDirectory = 'C:\VMs\Ubuntu-Template',
     [string] $VmName = 'Ubuntu-Template',
     [string] $VdiskManagerPath = 'C:\Program Files\VMware\VMware Workstation\vmware-vdiskmanager.exe',

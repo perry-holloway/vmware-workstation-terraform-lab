@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TERRAFORM_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAktYvA26sOmhTnY4/E5zhkhXzun+0AoyAwYcaMFt1LW terraform-vmware-monitoring"
-TERRAFORM_USER="${SUDO_USER:-$USER}"
+TERRAFORM_PUBLIC_KEY="${TERRAFORM_PUBLIC_KEY:-${1:-}}"
+TERRAFORM_USER="${TERRAFORM_USER:-${SUDO_USER:-$USER}}"
+
+if [[ -f "${TERRAFORM_PUBLIC_KEY}" ]]; then
+  TERRAFORM_PUBLIC_KEY="$(cat "${TERRAFORM_PUBLIC_KEY}")"
+fi
+
+if [[ -z "${TERRAFORM_PUBLIC_KEY}" || ! "${TERRAFORM_PUBLIC_KEY}" =~ ^ssh-(rsa|ed25519)[[:space:]] ]]; then
+  echo "Set TERRAFORM_PUBLIC_KEY or pass a public key file path, such as ~/.ssh/vmware_monitoring.pub." >&2
+  exit 1
+fi
 
 if [[ "${TERRAFORM_USER}" == "root" ]]; then
   echo "Run this with sudo from the non-root account Terraform will use." >&2

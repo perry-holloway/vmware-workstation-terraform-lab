@@ -1,11 +1,11 @@
 variable "ssh_user" {
   description = "Linux account used by Terraform on all lab VMs. It must have passwordless sudo for this lab."
   type        = string
-  default     = "hollowayps"
+  default     = "terraform"
 }
 
 variable "ssh_private_key_path" {
-  description = "Absolute path to the private SSH key authorized on all three VMs."
+  description = "Absolute path to the private SSH key authorized on all four VMs."
   type        = string
 }
 

@@ -34,7 +34,7 @@ Jenkins VM (2 CPU / 4 GB)
 
 Grafana receives two provisioned data sources:
 
-- **Central Prometheus:** host metrics from all three VMs and federated Kubernetes metrics.
+- **Central Prometheus:** host metrics from all four VMs and federated Kubernetes metrics.
 - **Kubernetes Prometheus:** complete Kubernetes metrics collected by the Prometheus Operator stack.
 
 Two starter dashboards are provisioned automatically:
@@ -62,10 +62,10 @@ Create one Ubuntu Server template VM in Workstation Pro. Ubuntu 24.04 LTS or 26.
 This project includes a helper that creates a completely new blank template VM from the local Ubuntu ISO and does not reuse any existing VM:
 
 ```powershell
-cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup\outputs\vmware-workstation-terraform-lab
+cd C:\Path\To\vmware-workstation-terraform-lab
 
 PowerShell -NoProfile -ExecutionPolicy Bypass -File .\scripts\New-UbuntuTemplateVM.ps1 `
-  -IsoPath "C:\Users\hollowayps\Downloads\ubuntu-26.04-live-server-amd64.iso" `
+  -IsoPath "C:\Users\<windows-user>\Downloads\ubuntu-26.04-live-server-amd64.iso" `
   -DestinationDirectory "C:\VMs\Ubuntu-Template" `
   -StartInstaller
 ```
@@ -73,21 +73,13 @@ PowerShell -NoProfile -ExecutionPolicy Bypass -File .\scripts\New-UbuntuTemplate
 The script refuses to overwrite a non-empty destination. Complete the Ubuntu installation once in the Workstation console using:
 
 - Hostname: `ubuntu-template`
-- Username: `hollowayps`
+- Username: `terraform`
 - OpenSSH server: enabled
 - Storage: use the entire virtual disk
 
-After the installed system reboots, copy `scripts/prepare-ubuntu-template.sh` into the VM or paste its contents, then run:
-
-```bash
-sudo bash prepare-ubuntu-template.sh
-```
-
-It installs OpenSSH and VMware Tools, authorizes the dedicated Terraform key, enables lab sudo automation, cleans the machine identity, and powers the template off.
-
 During Ubuntu installation:
 
-- Create the administrative account used by Terraform, such as `hollowayps`.
+- Create the administrative account used by Terraform, such as `terraform`.
 - Select **Install OpenSSH server**.
 - Use the VMware NAT network.
 - Install VMware Tools support:
@@ -97,31 +89,6 @@ sudo apt update
 sudo apt install -y open-vm-tools openssh-server
 sudo systemctl enable --now open-vm-tools ssh
 ```
-
-On Windows PowerShell, create the dedicated Terraform SSH key:
-
-```powershell
-ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\vmware_monitoring"
-```
-
-Authorize its public half on the template:
-
-```powershell
-Get-Content "$env:USERPROFILE\.ssh\vmware_monitoring.pub" |
-  ssh hollowayps@TEMPLATE_IP `
-  "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys"
-```
-
-Terraform also needs non-interactive sudo. Run on the template:
-
-```bash
-echo 'hollowayps ALL=(ALL) NOPASSWD:ALL' |
-  sudo tee /etc/sudoers.d/terraform-monitoring-lab
-sudo chmod 440 /etc/sudoers.d/terraform-monitoring-lab
-sudo visudo -cf /etc/sudoers.d/terraform-monitoring-lab
-```
-
-This broad passwordless rule is suitable for an isolated lab, not a production server.
 
 Configure DHCP to identify clones by their generated VMware MAC address. Find the Netplan YAML under `/etc/netplan`, then ensure the Ethernet configuration includes:
 
@@ -140,12 +107,21 @@ The interface may be named something other than `ens33`. Apply it with:
 sudo netplan apply
 ```
 
-Clean clone-specific identity and power off the template:
+On Windows PowerShell, create the dedicated Terraform SSH key:
 
-```bash
-sudo cloud-init clean --logs --machine-id
-sudo poweroff
+```powershell
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\vmware_monitoring"
 ```
+
+Copy the template-prep script and public key into the VM, then run the script:
+
+```powershell
+scp .\scripts\prepare-ubuntu-template.sh terraform@TEMPLATE_IP:/tmp/prepare-ubuntu-template.sh
+scp "$env:USERPROFILE\.ssh\vmware_monitoring.pub" terraform@TEMPLATE_IP:/tmp/vmware_monitoring.pub
+ssh terraform@TEMPLATE_IP "sudo bash /tmp/prepare-ubuntu-template.sh /tmp/vmware_monitoring.pub"
+```
+
+The script installs OpenSSH and VMware Tools, authorizes the dedicated Terraform public key, enables lab sudo automation, cleans the machine identity, and powers the template off. The broad passwordless sudo rule is suitable for an isolated lab, not a production server.
 
 Keep the template powered off when cloning it.
 
@@ -155,15 +131,15 @@ The target allocation is:
 
 | VM | CPU | RAM | Suggested disk | Suggested IP |
 |---|---:|---:|---:|---|
-| `prometheus` | 2 | 4 GB | 30 GB | `192.168.126.129` |
-| `kubernetes` | 2 | 8 GB | 50 GB | `192.168.126.131` |
-| `grafana` | 2 | 4 GB | 30 GB | `192.168.126.133` |
-| `jenkins` | 2 | 4 GB | 50 GB | `192.168.126.134` |
+| `prometheus` | 2 | 4 GB | 30 GB | `192.168.100.10` |
+| `kubernetes` | 2 | 8 GB | 50 GB | `192.168.100.11` |
+| `grafana` | 2 | 4 GB | 30 GB | `192.168.100.12` |
+| `jenkins` | 2 | 4 GB | 50 GB | `192.168.100.13` |
 
 From elevated Windows PowerShell, run the Workstation bootstrap helper:
 
 ```powershell
-cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup\outputs\vmware-workstation-terraform-lab
+cd C:\Path\To\vmware-workstation-terraform-lab
 
 PowerShell -NoProfile -ExecutionPolicy Bypass -File .\scripts\New-WorkstationLab.ps1 `
   -TemplateVmx "C:\VMs\Ubuntu-Template\Ubuntu-Template.vmx" `
@@ -175,12 +151,12 @@ The helper:
 - Creates full clones named `prometheus`, `kubernetes`, `grafana`, and `jenkins`
 - Disconnects the Ubuntu installer ISO from every clone
 - Assigns `2 CPU / 4 GB`, `2 CPU / 8 GB`, `2 CPU / 4 GB`, and `2 CPU / 4 GB`
-- Starts all three guests without opening console windows
+- Starts all four guests without opening console windows
 - Uses VMware Tools to discover their addresses
 - Writes VMX paths and IP addresses to `workstation.auto.tfvars`
 - Disables Terraform's second hardware edit because the helper has already applied it
 
-If you already have three suitable Workstation VMs, skip cloning and enter their VMX paths and addresses directly in `terraform.tfvars`.
+If you already have four suitable Workstation VMs, skip cloning and enter their VMX paths and addresses directly in `terraform.tfvars`.
 
 ## 3. Verify Guest Access
 
@@ -188,30 +164,30 @@ Verify non-interactive key authentication to every cloned VM:
 
 ```powershell
 ssh -o BatchMode=yes -i "$env:USERPROFILE\.ssh\vmware_monitoring" `
-  hollowayps@PROMETHEUS_IP hostname
+  terraform@PROMETHEUS_IP hostname
 
 ssh -o BatchMode=yes -i "$env:USERPROFILE\.ssh\vmware_monitoring" `
-  hollowayps@KUBERNETES_IP hostname
+  terraform@KUBERNETES_IP hostname
 
 ssh -o BatchMode=yes -i "$env:USERPROFILE\.ssh\vmware_monitoring" `
-  hollowayps@GRAFANA_IP hostname
+  terraform@GRAFANA_IP hostname
 
 ssh -o BatchMode=yes -i "$env:USERPROFILE\.ssh\vmware_monitoring" `
-  hollowayps@JENKINS_IP hostname
+  terraform@JENKINS_IP hostname
 ```
 
 If using existing VMs instead of clones, add the key to each VM:
 
 ```powershell
 Get-Content "$env:USERPROFILE\.ssh\vmware_monitoring.pub" |
-  ssh hollowayps@192.168.126.129 `
+  ssh terraform@192.168.100.10 `
   "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys"
 ```
 
 Also add the sudo rule to each existing VM:
 
 ```bash
-echo 'hollowayps ALL=(ALL) NOPASSWD:ALL' |
+echo 'terraform ALL=(ALL) NOPASSWD:ALL' |
   sudo tee /etc/sudoers.d/terraform-monitoring-lab
 sudo chmod 440 /etc/sudoers.d/terraform-monitoring-lab
 sudo visudo -cf /etc/sudoers.d/terraform-monitoring-lab
@@ -224,7 +200,7 @@ Keep the SSH private key protected.
 From Windows PowerShell:
 
 ```powershell
-cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup\outputs\vmware-workstation-terraform-lab
+cd C:\Path\To\vmware-workstation-terraform-lab
 Copy-Item terraform.tfvars.example terraform.tfvars
 notepad terraform.tfvars
 ```
@@ -240,11 +216,11 @@ alert_disk_threshold_percent      = 85
 alert_container_restart_threshold = 3
 ```
 
-`manage_workstation_hardware = true` requires all three guests to be powered off when Terraform first runs. Terraform writes a `.terraform-backup` beside each VMX file, applies the requested resources, then starts the guests headlessly when `start_workstation_vms = true`.
+`manage_workstation_hardware = true` requires all four guests to be powered off when Terraform first runs. Terraform writes a `.terraform-backup` beside each VMX file, applies the requested resources, then starts the guests headlessly when `start_workstation_vms = true`.
 
 ## 5. Apply
 
-For the initial apply, power off all three VMs when `manage_workstation_hardware = true`. Terraform configures the VMX files, starts the guests, waits for SSH, and provisions all services in the same apply.
+For the initial apply, power off all four VMs when `manage_workstation_hardware = true`. Terraform configures the VMX files, starts the guests, waits for SSH, and provisions all services in the same apply.
 
 ```powershell
 terraform init
@@ -261,7 +237,7 @@ The Kubernetes step can take 10-15 minutes while K3s, Helm charts, and container
 To add Jenkins to an already-built lab, run the build helper with hardware edits skipped. This creates the missing `jenkins` clone, refreshes `workstation.auto.tfvars`, and applies the Jenkins Terraform resource:
 
 ```powershell
-cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup\outputs\vmware-workstation-terraform-lab\scripts
+cd C:\Path\To\vmware-workstation-terraform-lab\scripts
 .\Build-MonitoringLab.ps1 -SkipHardwareChanges
 ```
 
@@ -269,18 +245,18 @@ cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup
 
 Terraform prints the service URLs. With the example addresses:
 
-- Standalone Prometheus: `http://192.168.126.129:9090`
-- Kubernetes Prometheus: `http://192.168.126.131:30090`
-- Central Prometheus: `http://192.168.126.133:9090`
-- Grafana: `http://192.168.126.133:3000`
-- Jenkins: `http://192.168.126.134:8080`
+- Standalone Prometheus: `http://192.168.100.10:9090`
+- Kubernetes Prometheus: `http://192.168.100.11:30090`
+- Central Prometheus: `http://192.168.100.12:9090`
+- Grafana: `http://192.168.100.12:3000`
+- Jenkins: `http://192.168.100.13:8080`
 
 Grafana username is `admin`; the password is `grafana_admin_password` from `terraform.tfvars`.
 
 Check central Prometheus targets:
 
 ```text
-http://192.168.126.133:9090/targets
+http://192.168.100.12:9090/targets
 ```
 
 Expected targets include:
@@ -295,7 +271,7 @@ Expected targets include:
 Check alert rules and firing alerts:
 
 ```text
-http://192.168.126.133:9090/alerts
+http://192.168.100.12:9090/alerts
 ```
 
 Check Kubernetes from the Kubernetes VM:
@@ -356,7 +332,7 @@ Ignored local files include:
 If you have the GitHub CLI installed and authenticated, create a private GitHub repository and push in one step:
 
 ```powershell
-cd C:\Users\hollowayps\Documents\Codex\2026-06-13\can-terraform-be-used-to-setup\outputs\vmware-workstation-terraform-lab
+cd C:\Path\To\vmware-workstation-terraform-lab
 
 .\scripts\Publish-ToGitHub.ps1 `
   -Repository "YOUR-GITHUB-USER/vmware-monitoring-lab" `

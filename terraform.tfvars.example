@@ -1,33 +1,33 @@
-ssh_user             = "hollowayps"
-ssh_private_key_path = "C:/Users/hollowayps/.ssh/vmware_monitoring"
+ssh_user             = "terraform"
+ssh_private_key_path = "C:/Users/<windows-user>/.ssh/vmware_monitoring"
 workstation_vmrun_path = "C:/Program Files/VMware/VMware Workstation/vmrun.exe"
 
-prometheus_vmx_path = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Prometheus/Prometheus.vmx"
-kubernetes_vmx_path = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Kubernetes/Kubernetes.vmx"
-grafana_vmx_path    = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Grafana/Grafana.vmx"
-jenkins_vmx_path    = "C:/Users/hollowayps/OneDrive/Documents/Virtual Machines/Jenkins/Jenkins.vmx"
+prometheus_vmx_path = "C:/VMs/Monitoring-Lab/prometheus/prometheus.vmx"
+kubernetes_vmx_path = "C:/VMs/Monitoring-Lab/kubernetes/kubernetes.vmx"
+grafana_vmx_path    = "C:/VMs/Monitoring-Lab/grafana/grafana.vmx"
+jenkins_vmx_path    = "C:/VMs/Monitoring-Lab/jenkins/jenkins.vmx"
 
 manage_workstation_hardware = true
 start_workstation_vms       = true
 
 prometheus_vm = {
   name    = "prometheus"
-  address = "192.168.126.129"
+  address = "192.168.100.10"
 }
 
 kubernetes_vm = {
   name    = "kubernetes"
-  address = "192.168.126.131"
+  address = "192.168.100.11"
 }
 
 grafana_vm = {
   name    = "grafana"
-  address = "192.168.126.133"
+  address = "192.168.100.12"
 }
 
 jenkins_vm = {
   name    = "jenkins"
-  address = "192.168.126.134"
+  address = "192.168.100.13"
 }
 
 grafana_admin_password = "replace-with-a-strong-password"
