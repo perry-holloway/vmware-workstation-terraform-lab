@@ -13,6 +13,8 @@ install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 chmod a+r /etc/apt/keyrings/docker.asc
 
+# This distribution metadata file is supplied by the target Ubuntu guest.
+# shellcheck source=/dev/null
 . /etc/os-release
 find /etc/apt/sources.list.d -maxdepth 1 -type f \
   \( -name 'docker*.list' -o -name 'docker*.sources' \) -delete

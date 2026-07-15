@@ -2,6 +2,8 @@
 
 This project provisions a four-VM monitoring lab over SSH using Terraform.
 
+[![Validate](https://github.com/perry-holloway/vmware-workstation-terraform-lab/actions/workflows/validate.yml/badge.svg)](https://github.com/perry-holloway/vmware-workstation-terraform-lab/actions/workflows/validate.yml)
+
 ## Architecture
 
 ```text
@@ -315,6 +317,14 @@ Configuration hashes are Terraform replacement triggers, so changed scripts and 
 The image defaults use `latest` for convenience. Pin explicit Prometheus, Grafana, and Node Exporter tags in `terraform.tfvars` for long-lived environments.
 
 The Grafana environment password only initializes a new Grafana database. Changing the Terraform variable later does not reset an existing Grafana user password.
+
+## Development and Contributions
+
+The project includes repository-specific [guidance for coding agents](AGENTS.md), an explanation of the [AI-assisted development workflow](docs/AI-DEVELOPMENT.md), and a [contribution guide](CONTRIBUTING.md). These documents describe the safety boundaries, review loop, and validation expected for both human- and AI-assisted changes.
+
+Pull requests run checks for Terraform formatting and validation, ShellCheck, PowerShell syntax, and Grafana dashboard JSON. The workflow intentionally performs static validation only; it does not start VMware guests or apply infrastructure from a hosted runner.
+
+Before opening a pull request, run the checks that are available locally and report any checks that require a live VMware environment separately.
 
 ## Publishing to GitHub
 
