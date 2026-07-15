@@ -13,6 +13,11 @@ variable "ssh_port" {
   description = "SSH port used by all VMs."
   type        = number
   default     = 22
+
+  validation {
+    condition     = var.ssh_port >= 1 && var.ssh_port <= 65535 && floor(var.ssh_port) == var.ssh_port
+    error_message = "ssh_port must be a whole number between 1 and 65535."
+  }
 }
 
 variable "prometheus_vm" {
@@ -62,36 +67,66 @@ variable "scrape_interval" {
   description = "Prometheus scrape interval."
   type        = string
   default     = "15s"
+
+  validation {
+    condition     = can(regex("^[1-9][0-9]*(ms|s|m|h|d|w|y)$", var.scrape_interval))
+    error_message = "scrape_interval must be a positive Prometheus duration such as 15s, 1m, or 1h."
+  }
 }
 
 variable "alert_cpu_threshold_percent" {
   description = "CPU usage percentage that triggers the HostHighCpuUsage alert."
   type        = number
   default     = 85
+
+  validation {
+    condition     = var.alert_cpu_threshold_percent > 0 && var.alert_cpu_threshold_percent <= 100
+    error_message = "alert_cpu_threshold_percent must be greater than 0 and no more than 100."
+  }
 }
 
 variable "alert_memory_threshold_percent" {
   description = "Memory usage percentage that triggers the HostHighMemoryUsage alert."
   type        = number
   default     = 85
+
+  validation {
+    condition     = var.alert_memory_threshold_percent > 0 && var.alert_memory_threshold_percent <= 100
+    error_message = "alert_memory_threshold_percent must be greater than 0 and no more than 100."
+  }
 }
 
 variable "alert_disk_threshold_percent" {
   description = "Filesystem usage percentage that triggers the HostHighFilesystemUsage alert."
   type        = number
   default     = 85
+
+  validation {
+    condition     = var.alert_disk_threshold_percent > 0 && var.alert_disk_threshold_percent <= 100
+    error_message = "alert_disk_threshold_percent must be greater than 0 and no more than 100."
+  }
 }
 
 variable "alert_container_restart_threshold" {
   description = "Container restart count in 15 minutes that triggers the KubernetesContainerRestarting alert."
   type        = number
   default     = 3
+
+  validation {
+    condition     = var.alert_container_restart_threshold >= 0 && floor(var.alert_container_restart_threshold) == var.alert_container_restart_threshold
+    error_message = "alert_container_restart_threshold must be a non-negative whole number."
+  }
 }
 
 variable "kubernetes_prometheus_node_port" {
   description = "NodePort used to expose Kubernetes Prometheus to the central Grafana VM."
   type        = number
   default     = 30090
+
+  validation {
+    condition     = var.kubernetes_prometheus_node_port >= 30000 && var.kubernetes_prometheus_node_port <= 32767 && floor(var.kubernetes_prometheus_node_port) == var.kubernetes_prometheus_node_port
+    error_message = "kubernetes_prometheus_node_port must be a whole number in the Kubernetes NodePort range 30000-32767."
+  }
 }
 
 variable "kube_prometheus_stack_chart_version" {
@@ -133,7 +168,7 @@ variable "manage_workstation_hardware" {
 }
 
 variable "start_workstation_vms" {
-  description = "Start the three VMs headlessly with vmrun before SSH provisioning."
+  description = "Start the four VMs headlessly with vmrun before SSH provisioning."
   type        = bool
   default     = true
 }
